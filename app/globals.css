@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  @apply bg-slate-950 text-slate-50;
+}
+
+body {
+  @apply antialiased;
+}
+p {
+  line-height: 2.2 !important;
+}
+@media (min-width: 768px) {
+  p {
+    line-height: 2.4 !important;
+  }
+}
