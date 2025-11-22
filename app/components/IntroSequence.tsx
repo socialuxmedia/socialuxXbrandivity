@@ -19,7 +19,7 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
       },
     })
 
-    tl.timeScale(1.5)
+    tl.timeScale(2)
 
     // halo initial
     tl.fromTo(
