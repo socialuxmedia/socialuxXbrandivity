@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import gsap from 'gsap'
+import { MagneticButton } from '../page'
 
 export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -17,6 +18,8 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
         setTimeout(() => onFinish(), 400) // petite pause avant disparition
       },
     })
+
+    tl.timeScale(1.5)
 
     // halo initial
     tl.fromTo(
@@ -61,7 +64,7 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
         opacity: 0,
         duration: 0.8,
       },
-      '+=0.6'
+      '+=0.3'
     )
   }, [onFinish])
 
@@ -93,6 +96,26 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
         <div className="flex items-center gap-6 text-xl tracking-widest">
           <span className="intro-right opacity-0">BRANDIVITY</span>
           <span className="intro-left opacity-0">SOCIALUX</span>
+        </div>
+      </div>
+
+      {/* CTA collé en bas */}
+      <div className="fixed bottom-4 left-1/2 z-[999] w-[92%] max-w-3xl -translate-x-1/2">
+        <div
+          dir="rtl"
+          className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/80 px-4 py-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-[0.78rem] text-[#E2DBD5] leading-relaxed">
+            جلسة تدقيق مجانية توضّح لك صورة التسويق والمبيعات بالكامل.
+          </p>
+
+          <MagneticButton
+            href="https://calendly.com/fares-azem/qualification-meeting"
+            target="_blank"
+            rel="noreferrer"
+          >
+            احجز الآن
+          </MagneticButton>
         </div>
       </div>
     </motion.div>

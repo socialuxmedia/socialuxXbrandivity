@@ -185,7 +185,7 @@ const panelVariants: Variants = {
   }),
 }
 
-function MagneticButton({
+export function MagneticButton({
   children,
   ...rest
 }: React.ComponentProps<typeof motion.a>) {
