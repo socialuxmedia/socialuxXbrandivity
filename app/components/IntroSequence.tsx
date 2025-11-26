@@ -110,7 +110,7 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
           </p>
 
           <MagneticButton
-            href="https://calendly.com/fares-azem/qualification-meeting"
+            href="https://calendly.com/brandivity/qualification-meeting"
             target="_blank"
             rel="noreferrer"
           >

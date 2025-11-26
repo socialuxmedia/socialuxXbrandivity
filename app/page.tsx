@@ -413,7 +413,7 @@ export default function Page() {
                     {(current.id === 'hero' || current.id === 'cost') && (
                       <div className="mt-4 flex flex-wrap items-center gap-4">
                         <MagneticButton
-                          href="https://calendly.com/fares-azem/qualification-meeting"
+                          href="https://calendly.com/brandivity/qualification-meeting"
                           target="_blank"
                           rel="noreferrer"
                         >
@@ -496,7 +496,7 @@ export default function Page() {
           </p>
 
           <MagneticButton
-            href="https://calendly.com/fares-azem/qualification-meeting"
+            href="https://calendly.com/brandivity/qualification-meeting"
             target="_blank"
             rel="noreferrer"
           >
