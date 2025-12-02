@@ -1,11 +1,19 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import gsap from 'gsap'
 import { MagneticButton } from '../page'
 
-export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
+type IntroSequenceProps = {
+  onFinish: () => void
+  onOpenBooking: () => void
+}
+
+export default function IntroSequence({
+  onFinish,
+  onOpenBooking,
+}: IntroSequenceProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -15,20 +23,18 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
     const tl = gsap.timeline({
       defaults: { ease: 'power3.out' },
       onComplete: () => {
-        setTimeout(() => onFinish(), 400) // petite pause avant disparition
+        setTimeout(() => onFinish(), 400)
       },
     })
 
     tl.timeScale(2)
 
-    // halo initial
     tl.fromTo(
       '.intro-halo',
       { opacity: 0, scale: 0.7 },
       { opacity: 1, scale: 1.2, duration: 1.2 }
     )
 
-    // ligne centrale
     tl.fromTo(
       '.intro-line',
       { width: 0, opacity: 0 },
@@ -36,7 +42,6 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
       '-=0.4'
     )
 
-    // deux noms split
     tl.fromTo(
       '.intro-left',
       { x: -30, opacity: 0 },
@@ -50,14 +55,12 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
       '-=0.55'
     )
 
-    // fusion subtle glow
     tl.to('.intro-line', {
       width: '260px',
       boxShadow: '0 0 40px rgba(217,197,165,0.9)',
       duration: 0.7,
     })
 
-    // flash + disappear
     tl.to(
       '.intro-container',
       {
@@ -110,9 +113,11 @@ export default function IntroSequence({ onFinish }: { onFinish: () => void }) {
           </p>
 
           <MagneticButton
-            href="https://calendly.com/brandivity/qualification-meeting"
-            target="_blank"
-            rel="noreferrer"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              onOpenBooking() // ouvre le même modal que sur la page
+            }}
           >
             احجز الآن
           </MagneticButton>

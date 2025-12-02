@@ -264,6 +264,8 @@ export default function Page() {
   const [direction, setDirection] = useState(1)
   const [showIntro, setShowIntro] = useState(true)
 
+  const [submitting, setSubmitting] = useState(false)
+
   const [isBookingOpen, setIsBookingOpen] = useState(false)
 
   // ref pour le container scrollable
@@ -273,6 +275,8 @@ export default function Page() {
 
   const handleBookingSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    setSubmitting(true)
 
     const form = e.currentTarget
     const formData = new FormData(form)
@@ -292,20 +296,35 @@ export default function Page() {
     }
 
     try {
-      await fetch('/api/odoo-lead', {
+      const res = await fetch('/api/odoo-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      // ici tu pourrais vérifier la réponse si tu veux faire du feedback
-    } catch (err) {
-      console.error('Erreur en envoyant les données à Odoo', err)
-      // optionnel: afficher un message d’erreur
-    }
 
-    // quoi qu’il arrive (succès Odoo ou pas), on envoie vers Calendly
-    window.open(calendlyUrl, '_blank', 'noopener,noreferrer')
-    setIsBookingOpen(false)
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        console.error('Odoo API error:', data)
+        setSubmitting(false)
+        window.alert('حدث خطأ أثناء إرسال البيانات. يرجى المحاولة مرة أخرى.')
+        return
+      }
+
+      setSubmitting(false)
+
+      // message de succès
+      window.alert('تم إرسال البيانات بنجاح. سيتم تحويلك الآن إلى صفحة الحجز.')
+
+      // redirection dans le même onglet (ne sera pas bloquée)
+      setIsBookingOpen(false)
+      window.location.href = calendlyUrl
+    } catch (err) {
+      console.error('Network error while sending data to Odoo:', err)
+      setSubmitting(false)
+      window.alert(
+        'تعذّر الاتصال بالخادم. تأكد من الاتصال بالإنترنت ثم حاول مرة أخرى.'
+      )
+    }
   }
 
   // auto-scroll vertical + passage à l'étape suivante
@@ -375,7 +394,12 @@ export default function Page() {
 
   return (
     <main className="relative min-h-screen bg-[#050304] text-[#F5F5F5] pb-32 md:pb-10">
-      {showIntro && <IntroSequence onFinish={() => setShowIntro(false)} />}
+      {showIntro && (
+        <IntroSequence
+          onFinish={() => setShowIntro(false)}
+          onOpenBooking={() => setIsBookingOpen(true)}
+        />
+      )}
 
       {/* background global */}
       <div className="pointer-events-none fixed inset-0 -z-30 bg-[radial-gradient(circle_at_top,_#4A0E14_0,_#050304_55%,_rgba(74,14,20,0.96)_100%)] opacity-[0.96]" />
@@ -753,7 +777,6 @@ export default function Page() {
                           name="needs"
                           value={label}
                           // required sur UN seul checkbox pour forcer au moins un choix
-                          required={idx === 0}
                           className="h-4 w-4 accent-[#4A0E14]"
                         />
                         <span>{label}</span>
@@ -775,9 +798,12 @@ export default function Page() {
 
                 <button
                   type="submit"
-                  className="rounded-full bg-[#4A0E14] px-6 py-2.5 text-[0.8rem] font-semibold text-[#F2ECE7] shadow-[0_16px_60px_rgba(0,0,0,0.9)] hover:-translate-y-[1px] transition-transform"
+                  disabled={submitting}
+                  className="rounded-full bg-[#4A0E14] px-6 py-2.5 text-[0.8rem] font-semibold text-[#F2ECE7] shadow-[0_16px_60px_rgba(0,0,0,0.9)] hover:-translate-y-[1px] transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  متابعة إلى صفحة الحجز في Calendly
+                  {submitting
+                    ? 'جاري إرسال البيانات...'
+                    : 'متابعة إلى صفحة الحجز في Calendly'}
                 </button>
               </div>
 

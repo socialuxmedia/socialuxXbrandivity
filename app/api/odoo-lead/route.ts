@@ -6,7 +6,7 @@ const ODOO_DB = process.env.ODOO_DB!
 const ODOO_USER = process.env.ODOO_USER!
 const ODOO_API_KEY = process.env.ODOO_API_KEY!
 
-// helper générique pour appeler Odoo
+// Generic helper to call Odoo
 function odooCall({
   service,
   method,
@@ -30,7 +30,7 @@ function odooCall({
 
 export async function POST(req: NextRequest) {
   if (!ODOO_URL || !ODOO_DB || !ODOO_USER || !ODOO_API_KEY) {
-    console.error('Configuration Odoo manquante')
+    console.error('Odoo configuration missing')
     return NextResponse.json(
       { error: 'Odoo configuration missing' },
       { status: 500 }
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 1) Authentification sur Odoo → uid
+    // 1) Authenticate → uid
     const uid = await odooCall({
       service: 'common',
       method: 'authenticate',
@@ -70,10 +70,10 @@ export async function POST(req: NextRequest) {
     })
 
     if (!uid) {
-      throw new Error('Échec authentification Odoo')
+      throw new Error('Odoo authentication failed')
     }
 
-    // 2) Construire le titre de l’opportunité
+    // 2) Build opportunity title (Arabic for the user-facing title)
     const opportunityTitle =
       company && company.trim().length > 0
         ? `جلسة تدقيق تسويقي – ${company.trim()}`
@@ -81,66 +81,59 @@ export async function POST(req: NextRequest) {
         ? `جلسة تدقيق تسويقي – ${fullName.trim()}`
         : 'جلسة تدقيق تسويقي – عميل جديد'
 
-    // 3) Construire les notes avec toutes les infos du formulaire
-    const marketingNeeds = needs && needs.length > 0 ? needs.join('، ') : '-'
+    // 3) Build a clean English summary for the plain "description" field
+    const marketingNeeds = needs && needs.length > 0 ? needs.join(', ') : '-'
 
-    const internalNotes = `
-الاسم: ${fullName || '-'}
-رقم الهاتف: ${phone || '-'}
-البريد الإلكتروني: ${email || '-'}
+    const internalNotes = [
+      `Name: ${fullName || '-'}`,
+      `Company: ${company || '-'}`,
+      `Phone: ${phone || '-'}`,
+      `Email: ${email || '-'}`,
+      `Employees: ${employeesCount || '-'}`,
+      `Internal marketing team: ${
+        hasInternalMarketingTeam === 'yes'
+          ? 'Yes'
+          : hasInternalMarketingTeam === 'no'
+          ? 'No'
+          : '-'
+      }`,
+      `Annual marketing budget (approx): ${annualMarketingBudget || '-'}`,
+      `Marketing needs: ${marketingNeeds}`,
+      `Page / website: ${socialOrWebsite || '-'}`,
+    ].join('  •  ')
 
-اسم الشركة: ${company || '-'}
-عدد الموظفين: ${employeesCount || '-'}
-
-فريق تسويق داخلي: ${
-      hasInternalMarketingTeam === 'yes'
-        ? 'نعم'
-        : hasInternalMarketingTeam === 'no'
-        ? 'لا'
-        : '-'
-    }
-
-ميزانية التسويق السنوية (تقديرية): ${annualMarketingBudget || '-'}
-
-الاحتياجات التسويقية:
-${marketingNeeds}
-
-رابط الصفحة / الموقع:
-${socialOrWebsite || '-'}
-    `.trim()
-
-    // 4) Data du lead au format Odoo
+    // 4) Lead data
     const leadData: any = {
-      // Titre opportunité (champ "Name" dans ton template)
+      // Title (Arabic, as you want it in the pipeline)
       name: opportunityTitle,
 
-      // Contact
+      // Contact info
       contact_name: fullName || undefined,
       partner_name: company || undefined,
       email_from: email || undefined,
       phone: phone || undefined,
 
-      // Site / page
+      // Website / social
       website: socialOrWebsite || undefined,
 
-      // Notes internes (champ "Notes" dans ton template)
+      // Internal Notes (plain text, English only to avoid RTL/LTR mess)
       description: internalNotes,
     }
 
-    // 5) Création du lead dans crm.lead
+    // 5) Create lead in crm.lead
     const leadId = await odooCall({
       service: 'object',
       method: 'execute_kw',
       args: [ODOO_DB, uid, ODOO_API_KEY, 'crm.lead', 'create', [leadData]],
     })
 
-    console.log('Lead Odoo créé avec ID:', leadId)
+    console.log('Odoo lead created with ID:', leadId)
 
     return NextResponse.json({ success: true, leadId })
   } catch (error) {
-    console.error('Erreur Odoo:', error)
+    console.error('Error while creating lead in Odoo:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la création du lead dans Odoo' },
+      { error: 'Error while creating lead in Odoo' },
       { status: 500 }
     )
   }
