@@ -264,8 +264,49 @@ export default function Page() {
   const [direction, setDirection] = useState(1)
   const [showIntro, setShowIntro] = useState(true)
 
+  const [isBookingOpen, setIsBookingOpen] = useState(false)
+
   // ref pour le container scrollable
   const scrollRef = useRef<HTMLDivElement | null>(null)
+
+  const calendlyUrl = 'https://calendly.com/brandivity/qualification-meeting'
+
+  const handleBookingSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    const payload = {
+      fullName: formData.get('fullName') as string,
+      phone: formData.get('phone') as string,
+      email: (formData.get('email') as string) || null,
+      company: (formData.get('company') as string) || null,
+      socialOrWebsite: (formData.get('socialOrWebsite') as string) || null,
+      employeesCount: (formData.get('employeesCount') as string) || null,
+      hasInternalMarketingTeam:
+        (formData.get('hasInternalMarketingTeam') as string) || null,
+      annualMarketingBudget:
+        (formData.get('annualMarketingBudget') as string) || null,
+      needs: formData.getAll('needs') as string[],
+    }
+
+    try {
+      await fetch('/api/odoo-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      // ici tu pourrais vérifier la réponse si tu veux faire du feedback
+    } catch (err) {
+      console.error('Erreur en envoyant les données à Odoo', err)
+      // optionnel: afficher un message d’erreur
+    }
+
+    // quoi qu’il arrive (succès Odoo ou pas), on envoie vers Calendly
+    window.open(calendlyUrl, '_blank', 'noopener,noreferrer')
+    setIsBookingOpen(false)
+  }
 
   // auto-scroll vertical + passage à l'étape suivante
   useEffect(() => {
@@ -274,7 +315,7 @@ export default function Page() {
     let timeoutId: number | null = null
 
     // temps d'affichage au début AVANT de commencer à scroller
-    const viewDelay = 2000 // 2 secondes, tu peux mettre 2500 / 3000 si tu veux plus long
+    const viewDelay = 2000 // 2 secondes
 
     delayId = window.setTimeout(() => {
       const el = scrollRef.current
@@ -413,9 +454,11 @@ export default function Page() {
                     {(current.id === 'hero' || current.id === 'cost') && (
                       <div className="mt-4 flex flex-wrap items-center gap-4">
                         <MagneticButton
-                          href="https://calendly.com/brandivity/qualification-meeting"
-                          target="_blank"
-                          rel="noreferrer"
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setIsBookingOpen(true)
+                          }}
                         >
                           احجز جلسة التدقيق المجانية
                         </MagneticButton>
@@ -496,14 +539,256 @@ export default function Page() {
           </p>
 
           <MagneticButton
-            href="https://calendly.com/brandivity/qualification-meeting"
-            target="_blank"
-            rel="noreferrer"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setIsBookingOpen(true)
+            }}
           >
             احجز الآن
           </MagneticButton>
         </div>
       </div>
+      {/* MODAL DE رِزيرﭬيشن */}
+      {isBookingOpen && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div
+            dir="rtl"
+            className="relative w-[96%] max-w-3xl max-h-[90vh] flex flex-col rounded-3xl border border-white/10 bg-[#050304] px-5 py-6 sm:px-8 sm:py-8 shadow-[0_28px_120px_rgba(0,0,0,0.95)]"
+          >
+            {/* bouton close */}
+            <button
+              type="button"
+              onClick={() => setIsBookingOpen(false)}
+              className="absolute left-4 top-4 text-xs text-[#B8AEA5] hover:text-[#F2ECE7]"
+            >
+              إغلاق
+            </button>
+
+            {/* HEADER */}
+            <div className="mb-4 flex flex-col gap-2 pr-6 shrink-0">
+              <p className="text-[0.8rem] uppercase tracking-[0.28em] text-[#B8AEA5]">
+                Socialux ✕ Brandivity
+              </p>
+              <h2 className="text-lg sm:text-xl font-semibold text-[#F2ECE7]">
+                قبل الحجز، نحتاج بعض المعلومات الأساسية
+              </h2>
+              <p className="text-[0.8rem] text-[#D4CFCA]">
+                تعبئة هذا النموذج تساعدنا نجهّز الجلسة بناءً على وضعكم الحالي
+                بدل ما نضيع أول 15 دقيقة في الأسئلة العامة.
+              </p>
+            </div>
+
+            {/* CONTENU SCROLLABLE */}
+            <form
+              onSubmit={handleBookingSubmit}
+              className="mt-2 flex-1 overflow-y-auto pr-1 space-y-4"
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* الاسم */}
+                <div>
+                  <label className="mb-1 block text-[0.78rem] text-[#CFC6BD]">
+                    الاسم <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="fullName"
+                    required
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                    placeholder=""
+                  />
+                </div>
+
+                {/* رقم الهاتف */}
+                <div>
+                  <label className="mb-1 block text-[0.78rem] text-[#CFC6BD]">
+                    رقم الهاتف <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    required
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                    placeholder=""
+                  />
+                </div>
+
+                {/* البريد الإلكتروني (اختياري) */}
+                <div>
+                  <label className="mb-1 block text-[0.78rem] text-[#CFC6BD]">
+                    البريد الإلكتروني <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                    placeholder="you@company.com"
+                    required
+                  />
+                </div>
+
+                {/* اسم الشركة (اختياري) */}
+                <div>
+                  <label className="mb-1 block text-[0.78rem] text-[#CFC6BD]">
+                    اسم الشركة (اختياري)
+                  </label>
+                  <input
+                    name="company"
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                    placeholder="مطعم، عيادة، متجر إلكتروني..."
+                  />
+                </div>
+
+                {/* صفحة السوشال / الموقع (اختياري) */}
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-[0.78rem] text-[#CFC6BD]">
+                    صفحتك على مواقع التواصل / موقعك الإلكتروني (اختياري)
+                  </label>
+                  <input
+                    name="socialOrWebsite"
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                    placeholder="رابط إنستغرام / فيسبوك / موقع"
+                  />
+                </div>
+
+                {/* عدد الموظفين */}
+                <div>
+                  <label className="mb-1 block text-[0.78rem] text-[#CFC6BD]">
+                    عدد الموظفين <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="employeesCount"
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                    placeholder="اختر تقريباً عدد الموظفين"
+                  />
+                  {/* <select
+                    name="employeesCount"
+                    required
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                  >
+                    <option value="">اختر تقريباً عدد الموظفين</option>
+                    <option value="1-5">من 1 إلى 5</option>
+                    <option value="6-20">من 6 إلى 20</option>
+                    <option value="21-50">من 21 إلى 50</option>
+                    <option value="51-200">من 51 إلى 200</option>
+                    <option value="200+">أكثر من 200</option>
+                  </select> */}
+                </div>
+
+                {/* فريق تسويق داخلي */}
+                <div>
+                  <label className="mb-2 block text-[0.78rem] text-[#CFC6BD]">
+                    عندكم فريق تسويق داخلي؟{' '}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-3 text-[0.82rem] text-[#E2DBD5]">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="hasInternalMarketingTeam"
+                        value="yes"
+                        required
+                        className="h-4 w-4 accent-[#4A0E14]"
+                      />
+                      <span>نعم</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="hasInternalMarketingTeam"
+                        value="no"
+                        className="h-4 w-4 accent-[#4A0E14]"
+                      />
+                      <span>لا</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* ميزانية التسويق السنوية */}
+                <div>
+                  <label className="mb-1 block text-[0.78rem] text-[#CFC6BD]">
+                    ميزانية التسويق السنوية (تقريبياً){' '}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="annualMarketingBudget"
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                    placeholder="اختر نطاقاً تقريبياً"
+                  />
+                  {/* <select
+                    name="annualMarketingBudget"
+                    required
+                    className="w-full rounded-2xl border border-white/12 bg-black/60 px-3 py-2.5 text-sm text-[#F2ECE7] outline-none focus:border-[#D9C5A5] focus:ring-1 focus:ring-[#D9C5A5]/70"
+                  >
+                    <option value="">اختر نطاقاً تقريبياً</option>
+                    <option value="<10k">أقل من 10,000$</option>
+                    <option value="10k-50k">بين 10,000$ و 50,000$</option>
+                    <option value="50k-150k">بين 50,000$ و 150,000$</option>
+                    <option value="150k+">أكثر من 150,000$</option>
+                  </select> */}
+                </div>
+
+                {/* حاجاتك */}
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-[0.78rem] text-[#CFC6BD]">
+                    حاجاتك (يمكن اختيار أكثر من خيار){' '}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 gap-2 text-[0.82rem] text-[#E2DBD5] sm:grid-cols-2">
+                    {[
+                      'إنشاء فكرة',
+                      'كتابة وإعداد محتوى',
+                      'تصوير',
+                      'تحرير',
+                      'تسويق أوفلاين',
+                      'تسويق أونلاين',
+                      'حملات موسمية',
+                      'حملات سنوية ثابتة',
+                    ].map((label, idx) => (
+                      <label
+                        key={label}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3 py-2"
+                      >
+                        <input
+                          type="checkbox"
+                          name="needs"
+                          value={label}
+                          // required sur UN seul checkbox pour forcer au moins un choix
+                          required={idx === 0}
+                          className="h-4 w-4 accent-[#4A0E14]"
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* FOOTER BOUTONS + DISCLAIMER */}
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsBookingOpen(false)}
+                  className="rounded-full border border-white/18 px-5 py-2.5 text-[0.8rem] text-[#D4CFCA] hover:border-[#F2ECE7]/70 hover:text-[#F2ECE7]"
+                >
+                  رجوع
+                </button>
+
+                <button
+                  type="submit"
+                  className="rounded-full bg-[#4A0E14] px-6 py-2.5 text-[0.8rem] font-semibold text-[#F2ECE7] shadow-[0_16px_60px_rgba(0,0,0,0.9)] hover:-translate-y-[1px] transition-transform"
+                >
+                  متابعة إلى صفحة الحجز في Calendly
+                </button>
+              </div>
+
+              <p className="mt-2 text-[0.7rem] text-[#9E948C]">
+                هذه البيانات لا تُستخدم لأي إعلانات عشوائية. الهدف الوحيد هو
+                تجهيز جلسة تدقيق حقيقية مبنية على وضع نشاطكم الحالي.
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
